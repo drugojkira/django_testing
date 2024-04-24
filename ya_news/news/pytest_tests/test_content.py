@@ -3,30 +3,32 @@ from django.urls import reverse
 
 from news.forms import CommentForm
 
+FORM_DATA = {
+    'text': 'Новый техт'
+}
 
-def test_home_page(client, news_10):
-    urls = reverse('news:home')
-    response = client.get(urls)
-    object_list = response.context['object_list']
-    news_count = len(object_list)
+
+def test_home_page(client, bulk_news_creation, home_url):
+    response = client.get(home_url)
+    news_list = response.context['object_list']
+    news_count = news_list.count()
     assert news_count == settings.NEWS_COUNT_ON_HOME_PAGE
 
 
-def test_news_order(client, news_10):
-    urls = reverse('news:home')
-    response = client.get(urls)
-    object_list = response.context['object_list']
-    all_dates = [news.date for news in object_list]
+def test_news_order(client, bulk_news_creation, home_url):
+    response = client.get(home_url)
+    news_list = response.context['object_list']
+    all_dates = [news.date for news in news_list]
     sorted_dates = sorted(all_dates, reverse=True)
     assert all_dates == sorted_dates
 
 
-def test_detail_page_contains_form(author_client, news, form_data):
+def test_detail_page_contains_form(author_client, news):
     url = reverse('news:detail', args=(news.id,))
-    response = author_client.get(url, data=form_data)
-    form = response.context['form']
+    response = author_client.get(url, data=FORM_DATA)
     assert 'form' in response.context
-    assert type(form) == CommentForm
+    form = response.context['form']
+    assert isinstance(form, CommentForm)
 
 
 def test_detail_page_contains_form_for_user(client, news):

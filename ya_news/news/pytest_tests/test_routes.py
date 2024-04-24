@@ -1,4 +1,5 @@
 import pytest
+
 from http import HTTPStatus
 
 from django.urls import reverse
@@ -12,11 +13,11 @@ from pytest_django.asserts import assertRedirects
         ('users:login', None),
         ('users:logout', None),
         ('users:signup', None),
-        ('news:detail', pytest.lazy_fixture('id_news_for_args')),
+        ('news:detail', 'news'),
     ),
 )
 def test_pages_availability_for_anonymous_user(client, name, args, news):
-    url = reverse(name, args=args)
+    url = reverse(name, args=(news.pk,) if args == 'news' else None)
     response = client.get(url)
     assert response.status_code == HTTPStatus.OK
 
@@ -53,13 +54,13 @@ def test_pages_availability_for_different_users(
 @pytest.mark.parametrize(
     'name, args',
     (
-        ('news:delete', pytest.lazy_fixture('id_comment_for_args')),
-        ('news:edit', pytest.lazy_fixture('id_comment_for_args')),
+        ('news:delete', 'id'),
+        ('news:edit', 'id'),
     ),
 )
-def test_redirects(client, name, args):
+def test_redirects(client, name, args, comment):
     login_url = reverse('users:login')
-    url = reverse(name, args=args)
+    url = reverse(name, args=(getattr(comment, args),))
     expected_url = f'{login_url}?next={url}'
     response = client.get(url)
     assertRedirects(response, expected_url)

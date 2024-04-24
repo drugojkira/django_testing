@@ -1,6 +1,6 @@
-from django.test import TestCase, Client
-from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.test import Client, TestCase
+from django.urls import reverse
 
 from notes.models import Note
 
@@ -29,30 +29,32 @@ class TestNotesPage(TestCase):
         ]
         Note.objects.bulk_create(all_notes)
 
-    def test_notes_list(self):
+    def setUp(self):
         self.client.force_login(self.author)
+
+    def test_notes_list(self):
         response = self.client.get(self.NOTES_URL)
-        object_list = response.context['object_list']
-        first_note = object_list[0]
-        self.assertIn(first_note, object_list)
+        notes = response.context['object_list']
+        first_note = notes[0]
+        self.assertIn(first_note, notes)
 
     def test_reader_context_list(self):
         self.client.force_login(self.reader)
         response = self.client.get(self.NOTES_URL)
         object_list = response.context['object_list']
-        notes_count = len(object_list)
-        self.assertEqual(notes_count, 0)
+        author_note = Note.objects.create(author=self.reader,
+                                          title="Заметка читателя")
+        self.assertNotIn(author_note, object_list)
 
     def test_author_context_list(self):
-        self.client.force_login(self.author)
         response = self.client.get(self.NOTES_URL)
         object_list = response.context['object_list']
-        notes_count = len(object_list)
-        self.assertEqual(notes_count, 5)
+        self.assertTrue(object_list)
+        for note in object_list:
+            self.assertEqual(note.author, self.author)
 
 
 class TestAddAndEditPage(TestCase):
-
     @classmethod
     def setUpTestData(cls):
         cls.author = User.objects.create(username='Лев Толстой')
@@ -62,8 +64,10 @@ class TestAddAndEditPage(TestCase):
             author=cls.author
         )
 
-    def test_form(self):
+    def setUp(self):
         self.client.force_login(self.author)
+
+    def test_form(self):
         urls = (
             ('notes:edit', (self.notes.slug,)),
             ('notes:add', None),

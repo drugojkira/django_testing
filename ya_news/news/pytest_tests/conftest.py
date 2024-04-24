@@ -1,9 +1,9 @@
 import pytest
-from datetime import timedelta
 
+from django.urls import reverse
 from news.models import News, Comment
 from django.conf import settings
-from django.utils import timezone
+from django.test import Client
 
 
 @pytest.fixture
@@ -12,7 +12,8 @@ def reader(django_user_model):
 
 
 @pytest.fixture
-def reader_client(reader, client):
+def reader_client(reader):
+    client = Client()
     client.force_login(reader)
     return client
 
@@ -23,7 +24,8 @@ def author(django_user_model):
 
 
 @pytest.fixture
-def author_client(author, client):
+def author_client(author):
+    client = Client()
     client.force_login(author)
     return client
 
@@ -38,12 +40,11 @@ def news(author):
 
 
 @pytest.fixture
-def news_10(author):
-    all_news = []
-    for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1):
-        news = News(title=f'Новость {index}', text='Просто текст.')
-        all_news.append(news)
-    return News.objects.bulk_create(all_news)
+def bulk_news_creation(author):
+    return News.objects.bulk_create(
+        News(title=f'Новость {index}', text='Просто текст.')
+        for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)
+    )
 
 
 @pytest.fixture
@@ -58,31 +59,9 @@ def comment(author, news):
 
 @pytest.fixture
 def commets(author, news):
-    all_comments = []
-    for index in range(2):
-        comment = Comment.objects.create(
-            news=news,
-            author=author,
-            text=f'Текст комментария {index}'
-        )
-        comment.created = timezone.now() + timedelta(days=index)
-        comment.save()
-        all_comments.append(comment)
-    return all_comments
+    return author, news
 
 
 @pytest.fixture
-def id_news_for_args(news):
-    return news.id,
-
-
-@pytest.fixture
-def id_comment_for_args(comment):
-    return comment.id,
-
-
-@pytest.fixture
-def form_data():
-    return {
-        'text': 'Новый техт'
-    }
+def home_url():
+    return reverse('news:home')

@@ -42,7 +42,6 @@ class TestRoutes(TestCase):
             ('notes:add', None),
         )
         for name, args in urls:
-            self.client.force_login(self.author)
             with self.subTest(name=name):
                 url = reverse(name, args=args)
                 response = self.client.get(url)
