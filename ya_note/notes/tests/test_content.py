@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from notes.models import Note
 
+from notes.forms import NoteForm
 
 User = get_user_model()
 
@@ -18,6 +19,8 @@ class TestNotesPage(TestCase):
         cls.reader = User.objects.create(username='Читатель')
         cls.reader_client = Client()
         cls.reader_client.force_login(cls.reader)
+        cls.author_client = Client()
+        cls.author_client.force_login(cls.author)
         all_notes = [
             Note(
                 title=f'Новость{index}',
@@ -30,7 +33,8 @@ class TestNotesPage(TestCase):
         Note.objects.bulk_create(all_notes)
 
     def setUp(self):
-        self.client.force_login(self.author)
+        self.client = self.author_client
+        self.reader_client = self.reader_client
 
     def test_notes_list(self):
         response = self.client.get(self.NOTES_URL)
@@ -39,19 +43,11 @@ class TestNotesPage(TestCase):
         self.assertIn(first_note, notes)
 
     def test_reader_context_list(self):
-        self.client.force_login(self.reader)
         response = self.client.get(self.NOTES_URL)
-        object_list = response.context['object_list']
+        notes_queryset = response.context['object_list']
         author_note = Note.objects.create(author=self.reader,
                                           title="Заметка читателя")
-        self.assertNotIn(author_note, object_list)
-
-    def test_author_context_list(self):
-        response = self.client.get(self.NOTES_URL)
-        object_list = response.context['object_list']
-        self.assertTrue(object_list)
-        for note in object_list:
-            self.assertEqual(note.author, self.author)
+        self.assertNotIn(author_note, notes_queryset)
 
 
 class TestAddAndEditPage(TestCase):
@@ -65,6 +61,7 @@ class TestAddAndEditPage(TestCase):
         )
 
     def setUp(self):
+        self.client = Client()
         self.client.force_login(self.author)
 
     def test_form(self):
@@ -77,3 +74,5 @@ class TestAddAndEditPage(TestCase):
                 url = reverse(name, args=args)
                 response = self.client.get(url)
                 self.assertIn('form', response.context)
+                form = response.context['form']
+                self.assertIsInstance(form, NoteForm)

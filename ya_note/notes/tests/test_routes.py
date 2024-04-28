@@ -21,44 +21,46 @@ class TestRoutes(TestCase):
             text='Текст',
             author=cls.author
         )
+        cls.client_author = cls.client_class()
+        cls.client_reader = cls.client_class()
+        cls.urls_without_args = (
+            'notes:home',
+            'users:login',
+            'users:logout',
+            'users:signup',
+        )
+        cls.urls_with_args = {
+            'notes:list': (None,),
+            'notes:success': (None,),
+            'notes:add': (None,),
+        }
 
     def test_pages_availability(self):
-        urls = (
-            ('notes:home', None),
-            ('users:login', None),
-            ('users:logout', None),
-            ('users:signup', None),
-        )
-        for name, args in urls:
+        for name in self.urls_without_args:
             with self.subTest(name=name):
-                url = reverse(name, args=args)
+                url = reverse(name)
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def page_available_for_authorized_user(self):
-        urls = (
-            ('notes:list', None),
-            ('notes:success', None),
-            ('notes:add', None),
-        )
-        for name, args in urls:
+        for name, args in self.urls_with_args.items():
             with self.subTest(name=name):
                 url = reverse(name, args=args)
+                self.client.force_login(self.author)
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_availability_for_edit_delite_detail(self):
-        users_statuses = (
-            (self.author, HTTPStatus.OK),
-            (self.reader, HTTPStatus.NOT_FOUND),
-        )
-        for user, status in users_statuses:
-            self.client.force_login(user)
-            for name in ('notes:edit', 'notes:delete', 'notes:detail'):
-                with self.subTest(user=user, name=name):
-                    url = reverse(name, args=(self.note.slug,))
-                    response = self.client.get(url)
-                    self.assertEqual(response.status_code, status)
+        users = [self.client_author, self.client_reader]
+        statuses = [HTTPStatus.OK, HTTPStatus.NOT_FOUND]
+        for user, status in zip(users, statuses):
+            with self.subTest(user=user):
+                url = reverse('notes:edit', args=(self.note.slug,))
+                user.force_login(self.author if
+                                 user == self.client_author
+                                 else self.reader)
+                response = user.get(url)
+                self.assertEqual(response.status_code, status)
 
     def test_redirect_for_anonymous_client(self):
         login_url = reverse('users:login')

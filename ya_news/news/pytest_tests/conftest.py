@@ -1,9 +1,14 @@
 import pytest
 
-from django.urls import reverse
-from news.models import News, Comment
-from django.conf import settings
+from datetime import timedelta
+
+from news.models import Comment, News
+
 from django.test import Client
+from django.conf import settings
+from django.utils import timezone
+from django.test import Client
+from django.urls import reverse
 
 
 @pytest.fixture
@@ -58,10 +63,22 @@ def comment(author, news):
 
 
 @pytest.fixture
-def commets(author, news):
-    return author, news
+def comments(author, news):
+    for index in range(2):
+        comment = Comment.objects.create(
+            news=news,
+            author=author,
+            text=f'Текст комментария {index}'
+        )
+        comment.created = timezone.now() + timedelta(days=index)
+        comment.save()
 
 
 @pytest.fixture
 def home_url():
     return reverse('news:home')
+
+
+@pytest.fixture
+def news_detail_url(news):
+    return reverse('news:detail', args=(news.id,))
