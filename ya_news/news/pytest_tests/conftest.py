@@ -1,14 +1,13 @@
-import pytest
-
 from datetime import timedelta
 
-from news.models import Comment, News
-
-from django.test import Client
 from django.conf import settings
-from django.utils import timezone
 from django.test import Client
 from django.urls import reverse
+from django.utils import timezone
+
+import pytest
+
+from news.models import Comment, News
 
 
 @pytest.fixture
@@ -82,3 +81,13 @@ def home_url():
 @pytest.fixture
 def news_detail_url(news):
     return reverse('news:detail', args=(news.id,))
+
+
+@pytest.fixture
+def url_to_delete_comment(comment):
+    return reverse('news:delete', args=(comment.id,))
+
+
+@pytest.fixture
+def url_to_edit_comment(comment):
+    return reverse('news:edit', args=(comment.id,))

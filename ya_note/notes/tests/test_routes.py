@@ -6,7 +6,6 @@ from django.urls import reverse
 
 from notes.models import Note
 
-
 User = get_user_model()
 
 
@@ -50,15 +49,14 @@ class TestRoutes(TestCase):
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_availability_for_edit_delite_detail(self):
+    def test_availability_for_edit_delete_detail(self):
         users = [self.client_author, self.client_reader]
         statuses = [HTTPStatus.OK, HTTPStatus.NOT_FOUND]
         for user, status in zip(users, statuses):
             with self.subTest(user=user):
                 url = reverse('notes:edit', args=(self.note.slug,))
                 user.force_login(self.author if
-                                 user == self.client_author
-                                 else self.reader)
+                                 user == self.client_author else self.reader)
                 response = user.get(url)
                 self.assertEqual(response.status_code, status)
 

@@ -3,6 +3,7 @@ from http import HTTPStatus
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
+
 from notes.models import Note
 from pytils.translit import slugify
 
@@ -41,9 +42,12 @@ class TestNoteCreation(TestCase):
     def test_two_identical_slug(self):
         self.auth_client.post(self.url, data=self.form_data)
         notes_count_before = Note.objects.count()
-        self.auth_client.post(self.url, data=self.form_data)
+        response = self.auth_client.post(self.url, data=self.form_data)
         notes_count_after = Note.objects.count()
         self.assertEqual(notes_count_before, notes_count_after)
+        form = response.context['form']
+        slug_errors = form.errors.get('slug', [])
+        self.assertTrue(slug_errors)
 
     def test_automatic_creation_slug(self):
         self.auth_client.post(self.url, data=self.form_data)
