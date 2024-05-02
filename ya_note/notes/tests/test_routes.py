@@ -1,15 +1,15 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
 from django.urls import reverse
 
+from .test_content import BaseTestCase
 from notes.models import Note
 
 User = get_user_model()
 
 
-class TestRoutes(TestCase):
+class TestRoutes(BaseTestCase):
 
     @classmethod
     def setUpTestData(cls):
@@ -22,6 +22,8 @@ class TestRoutes(TestCase):
         )
         cls.client_author = cls.client_class()
         cls.client_reader = cls.client_class()
+        cls.client_author.force_login(cls.author)
+        cls.client_reader.force_login(cls.reader)
         cls.urls_without_args = (
             'notes:home',
             'users:login',
@@ -45,7 +47,6 @@ class TestRoutes(TestCase):
         for name, args in self.urls_with_args.items():
             with self.subTest(name=name):
                 url = reverse(name, args=args)
-                self.client.force_login(self.author)
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
@@ -55,8 +56,6 @@ class TestRoutes(TestCase):
         for user, status in zip(users, statuses):
             with self.subTest(user=user):
                 url = reverse('notes:edit', args=(self.note.slug,))
-                user.force_login(self.author if
-                                 user == self.client_author else self.reader)
                 response = user.get(url)
                 self.assertEqual(response.status_code, status)
 

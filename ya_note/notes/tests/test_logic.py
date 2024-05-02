@@ -3,25 +3,15 @@ from http import HTTPStatus
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
-
-from notes.models import Note
 from pytils.translit import slugify
+
+from .test_content import BaseTestCase
+from notes.models import Note
 
 User = get_user_model()
 
 
-class TestNoteCreation(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.url = reverse('notes:add', args=None)
-        cls.user = User.objects.create(username='Мимо Крокодил')
-        cls.auth_client = Client()
-        cls.auth_client.force_login(cls.user)
-        cls.form_data = {
-            'text': 'Текст',
-            'title': 'Заголовок'
-        }
+class TestNoteCreation(BaseTestCase):
 
     def test_anonymous_user_cant_create_note(self):
         notes_count_before = Note.objects.count()
@@ -48,6 +38,9 @@ class TestNoteCreation(TestCase):
         form = response.context['form']
         slug_errors = form.errors.get('slug', [])
         self.assertTrue(slug_errors)
+        expected_error_message = ("zagolovok - такой slug уже существует, "
+                                  "придумайте уникальное значение!")
+        self.assertIn(expected_error_message, slug_errors)
 
     def test_automatic_creation_slug(self):
         self.auth_client.post(self.url, data=self.form_data)

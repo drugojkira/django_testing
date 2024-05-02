@@ -1,6 +1,5 @@
 from http import HTTPStatus
 
-from django.urls import reverse
 from pytest_django.asserts import assertRedirects, assertFormError
 
 from news.forms import BAD_WORDS, WARNING
@@ -22,10 +21,9 @@ def test_user_can_create_comment(author_client, author, news, news_detail_url):
     assert new_comment.news == news
 
 
-def test_anonymous_user_cant_create_note(client, news_detail_url):
+def test_anonymous_user_cant_create_note(client, login_url, news_detail_url):
     comments_count = Comment.objects.count()
     response = client.post(news_detail_url, data=FORM_DATA)
-    login_url = reverse('users:login')
     expected_url = f'{login_url}?next={news_detail_url}'
     assertRedirects(response, expected_url)
     assert Comment.objects.count() == comments_count
@@ -49,13 +47,15 @@ def test_author_can_delete_comment(author_client, news_detail_url,
     assert Comment.objects.count() == comments_count - 1
 
 
-def test_author_can_edit_comment(author_client, comment, news_detail_url,
-                                 url_to_edit_comment):
+def test_author_can_edit_comment(author, author_client, comment, news,
+                                 news_detail_url, url_to_edit_comment):
     url_to_comments = news_detail_url + '#comments'
     response = author_client.post(url_to_edit_comment, data=FORM_DATA)
     assertRedirects(response, url_to_comments)
     comment.refresh_from_db()
     assert comment.text == FORM_DATA['text']
+    assert comment.author == author
+    assert comment.news == news
 
 
 def test_user_cant_delete_comment_of_another_user(reader_client,

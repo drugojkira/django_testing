@@ -32,20 +32,19 @@ def test_pages_availability_for_author(author_client, name, comment):
 
 
 @pytest.mark.parametrize(
-    'reverse_url, parametrized_client, expected_status',
+    'reverse_url, parametrized_client, status, comment_url',
     [
         ('news:delete', pytest.lazy_fixture('admin_client'),
-         HTTPStatus.NOT_FOUND),
+         HTTPStatus.NOT_FOUND, pytest.lazy_fixture('url_to_delete_comment')),
         ('news:edit', pytest.lazy_fixture('author_client'),
-         HTTPStatus.OK)
+         HTTPStatus.OK, pytest.lazy_fixture('url_to_edit_comment'))
     ]
 )
 def test_pages_availability_for_different_users(reverse_url,
                                                 parametrized_client,
-                                                expected_status, comment):
-    url = reverse(reverse_url, args=(comment.id,))
-    response = parametrized_client.get(url)
-    assert response.status_code == expected_status
+                                                status, comment_url):
+    response = parametrized_client.get(comment_url)
+    assert response.status_code == status
 
 
 @pytest.mark.parametrize(

@@ -2,8 +2,9 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from notes.models import Note
 from notes.forms import NoteForm
+from notes.models import Note
+
 
 User = get_user_model()
 
@@ -13,6 +14,24 @@ class BaseTestCase(TestCase):
     def setUpTestData(cls):
         cls.author = User.objects.create(username='Лев Толстой')
         cls.reader = User.objects.create(username='Читатель')
+        cls.reader_client = Client()
+        cls.reader_client.force_login(cls.reader)
+        cls.author_client = Client()
+        cls.author_client.force_login(cls.author)
+        cls.list_url = reverse('notes:list')
+        cls.note = Note.objects.create(
+            title='Тестовая новость',
+            text='Просто текст.',
+            author=cls.author
+        )
+        cls.url = reverse('notes:add', args=None)
+        cls.user = User.objects.create(username='Мимо Крокодил')
+        cls.auth_client = Client()
+        cls.auth_client.force_login(cls.user)
+        cls.form_data = {
+            'text': 'Текст',
+            'title': 'Заголовок'
+        }
 
 
 class TestNotesPage(BaseTestCase):
@@ -30,15 +49,8 @@ class TestNotesPage(BaseTestCase):
         ]
         Note.objects.bulk_create(cls.notes)
 
-    def setUp(self):
-        super().setUp()
-        self.reader_client = Client()
-        self.reader_client.force_login(self.reader)
-        self.author_client = Client()
-        self.author_client.force_login(self.author)
-
     def test_notes_list(self):
-        response = self.author_client.get(reverse('notes:list'))
+        response = self.author_client.get(self.list_url)
         notes = response.context['object_list']
         author_note = Note.objects.filter(author=self.author).first()
         self.assertIsNotNone(author_note)
@@ -47,23 +59,13 @@ class TestNotesPage(BaseTestCase):
     def test_reader_context_list(self):
         response = self.author_client.get(reverse('notes:list'))
         notes_queryset = response.context['object_list']
-        self.assertNotIn(self.reader, [note.author for note in notes_queryset])
+        self.assertFalse(notes_queryset.filter(author=self.reader).exists())
 
 
 class TestAddAndEditPage(BaseTestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        cls.note = Note.objects.create(
-            title='Тестовая новость',
-            text='Просто текст.',
-            author=cls.author
-        )
-
-    def setUp(self):
-        super().setUp()
-        self.client = Client()
-        self.client.force_login(self.author)
 
     def test_form(self):
         urls = (
@@ -73,7 +75,7 @@ class TestAddAndEditPage(BaseTestCase):
         for name, args in urls:
             with self.subTest(name=name):
                 url = reverse(name, args=args)
-                response = self.client.get(url)
+                response = self.author_client.get(url)
                 self.assertIn('form', response.context)
                 form = response.context['form']
                 self.assertIsInstance(form, NoteForm)
