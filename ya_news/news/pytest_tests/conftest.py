@@ -98,5 +98,10 @@ def login_url():
 
 
 @pytest.fixture
-def comment_url(reverse, reverse_url, comment):
-    return reverse(reverse_url, args=(comment.id,))
+def logout_url():
+    return reverse('users:logout')
+
+
+@pytest.fixture
+def signup_url():
+    return reverse('users:signup')

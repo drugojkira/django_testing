@@ -7,6 +7,7 @@ from pytils.translit import slugify
 
 from .test_content import BaseTestCase
 from notes.models import Note
+from notes.forms import WARNING
 
 User = get_user_model()
 
@@ -38,8 +39,7 @@ class TestNoteCreation(BaseTestCase):
         form = response.context['form']
         slug_errors = form.errors.get('slug', [])
         self.assertTrue(slug_errors)
-        expected_error_message = ("zagolovok - такой slug уже существует, "
-                                  "придумайте уникальное значение!")
+        expected_error_message = f"{slugify(self.form_data['title'])}{WARNING}"
         self.assertIn(expected_error_message, slug_errors)
 
     def test_automatic_creation_slug(self):

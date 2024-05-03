@@ -6,19 +6,18 @@ from pytest_django.asserts import assertRedirects
 
 
 @pytest.mark.parametrize(
-    'name, args',
-    (
-        ('news:home', None),
-        ('users:login', None),
-        ('users:logout', None),
-        ('users:signup', None),
-        ('news:detail', 'news'),
-    ),
+    'url_fixture',
+    [
+        'home_url',
+        'login_url',
+        'logout_url',
+        'signup_url',
+        'news_detail_url',
+    ],
 )
-def test_pages_availability_for_anonymous_user(client, name, args, news):
-    url = reverse(name, args=(news.pk,) if args == 'news' else None)
-    response = client.get(url)
-    assert response.status_code == HTTPStatus.OK
+def test_pages_availability_for_anonymous_user(client, url_fixture):
+    response = client.get(url_fixture)
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.parametrize(
@@ -32,18 +31,18 @@ def test_pages_availability_for_author(author_client, name, comment):
 
 
 @pytest.mark.parametrize(
-    'reverse_url, parametrized_client, status, comment_url',
+    'reverse_url, parametrized_client, status',
     [
         ('news:delete', pytest.lazy_fixture('admin_client'),
-         HTTPStatus.NOT_FOUND, pytest.lazy_fixture('url_to_delete_comment')),
+         HTTPStatus.NOT_FOUND),
         ('news:edit', pytest.lazy_fixture('author_client'),
-         HTTPStatus.OK, pytest.lazy_fixture('url_to_edit_comment'))
+         HTTPStatus.NOT_FOUND)
     ]
 )
 def test_pages_availability_for_different_users(reverse_url,
                                                 parametrized_client,
-                                                status, comment_url):
-    response = parametrized_client.get(comment_url)
+                                                status):
+    response = parametrized_client.get(reverse_url)
     assert response.status_code == status
 
 

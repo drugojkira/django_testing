@@ -18,6 +18,10 @@ class BaseTestCase(TestCase):
         cls.reader_client.force_login(cls.reader)
         cls.author_client = Client()
         cls.author_client.force_login(cls.author)
+        cls.client_author = cls.client_class()
+        cls.client_reader = cls.client_class()
+        cls.client_author.force_login(cls.author)
+        cls.client_reader.force_login(cls.reader)
         cls.list_url = reverse('notes:list')
         cls.note = Note.objects.create(
             title='Тестовая новость',
@@ -32,6 +36,23 @@ class BaseTestCase(TestCase):
             'text': 'Текст',
             'title': 'Заголовок'
         }
+        cls.urls = [
+            ('notes:edit', (cls.note.slug,)),
+            ('notes:add', None),
+        ]
+        cls.urls_without_args = (
+            'notes:home',
+            'users:login',
+            'users:logout',
+            'users:signup',
+        )
+        cls.urls_with_args = {
+            'notes:list': (None,),
+            'notes:success': (None,),
+            'notes:add': (None,),
+        }
+        cls.login_url = reverse('users:login')
+        cls.notes_edit_url = reverse('notes:edit', args=(cls.note.slug,))
 
 
 class TestNotesPage(BaseTestCase):
@@ -57,7 +78,7 @@ class TestNotesPage(BaseTestCase):
         self.assertIn(author_note, notes)
 
     def test_reader_context_list(self):
-        response = self.author_client.get(reverse('notes:list'))
+        response = self.author_client.get(self.list_url)
         notes_queryset = response.context['object_list']
         self.assertFalse(notes_queryset.filter(author=self.reader).exists())
 
@@ -68,11 +89,7 @@ class TestAddAndEditPage(BaseTestCase):
         super().setUpTestData()
 
     def test_form(self):
-        urls = (
-            ('notes:edit', (self.note.slug,)),
-            ('notes:add', None),
-        )
-        for name, args in urls:
+        for name, args in self.urls:
             with self.subTest(name=name):
                 url = reverse(name, args=args)
                 response = self.author_client.get(url)
