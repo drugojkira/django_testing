@@ -36,10 +36,10 @@ class BaseTestCase(TestCase):
             'text': 'Текст',
             'title': 'Заголовок'
         }
-        cls.urls = [
-            ('notes:edit', (cls.note.slug,)),
-            ('notes:add', None),
-        ]
+        cls.urls = {
+            'edit': reverse('notes:edit', args=(cls.note.slug,)),
+            'add': reverse('notes:add'),
+        }
         cls.urls_without_args = (
             'notes:home',
             'users:login',
@@ -47,9 +47,9 @@ class BaseTestCase(TestCase):
             'users:signup',
         )
         cls.urls_with_args = {
-            'notes:list': (None,),
-            'notes:success': (None,),
-            'notes:add': (None,),
+            'list': reverse('notes:list'),
+            'success': reverse('notes:success'),
+            'add': reverse('notes:add'),
         }
         cls.login_url = reverse('users:login')
         cls.notes_edit_url = reverse('notes:edit', args=(cls.note.slug,))
@@ -84,14 +84,10 @@ class TestNotesPage(BaseTestCase):
 
 
 class TestAddAndEditPage(BaseTestCase):
-    @classmethod
-    def setUpTestData(cls):
-        super().setUpTestData()
 
     def test_form(self):
-        for name, args in self.urls:
+        for name, url in self.urls.items():
             with self.subTest(name=name):
-                url = reverse(name, args=args)
                 response = self.author_client.get(url)
                 self.assertIn('form', response.context)
                 form = response.context['form']
