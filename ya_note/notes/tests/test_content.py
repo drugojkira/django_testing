@@ -28,6 +28,13 @@ class BaseTestCase(TestCase):
             text='Просто текст.',
             author=cls.author
         )
+        cls.note_url = reverse('notes:success', args=None)
+        cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))
+        cls.delete_url = reverse('notes:delete', args=(cls.note.slug,))
+        cls.form_data = {
+            'text': 'Измененный текст',
+            'title': 'Измененный заголовок'
+        }
         cls.url = reverse('notes:add', args=None)
         cls.user = User.objects.create(username='Мимо Крокодил')
         cls.auth_client = Client()
@@ -53,6 +60,7 @@ class BaseTestCase(TestCase):
         }
         cls.login_url = reverse('users:login')
         cls.notes_edit_url = reverse('notes:edit', args=(cls.note.slug,))
+        cls.notes_detail = reverse('notes:detail', args=(cls.note.slug,))
 
 
 class TestNotesPage(BaseTestCase):

@@ -1,8 +1,6 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
-from django.urls import reverse
 from pytils.translit import slugify
 
 from .test_content import BaseTestCase
@@ -49,28 +47,7 @@ class TestNoteCreation(BaseTestCase):
         self.assertEqual(note.slug, expected_slug)
 
 
-class TestNoteEditDelete(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.author = User.objects.create(username='Автор комментария')
-        cls.author_client = Client()
-        cls.author_client.force_login(cls.author)
-        cls.reader = User.objects.create(username='Читатель')
-        cls.reader_client = Client()
-        cls.reader_client.force_login(cls.reader)
-        cls.note = Note.objects.create(
-            title='Заголовок',
-            text='Текст',
-            author=cls.author,
-        )
-        cls.note_url = reverse('notes:success', args=None)
-        cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))
-        cls.delete_url = reverse('notes:delete', args=(cls.note.slug,))
-        cls.form_data = {
-            'text': 'Измененный текст',
-            'title': 'Измененный заголовок'
-        }
+class TestNoteEditDelete(BaseTestCase):
 
     def test_author_can_delete_note(self):
         notes_count_before = Note.objects.count()

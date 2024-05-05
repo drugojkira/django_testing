@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
 import pytest
-from django.urls import reverse
 from pytest_django.asserts import assertRedirects
 
 
@@ -25,14 +24,14 @@ def test_page_availability(url_fixture, client_fixture,
 
 
 @pytest.mark.parametrize(
-    'name, args',
-    (
-        ('news:delete', 'id'),
-        ('news:edit', 'id'),
-    ),
+    'fixture_name',
+    [
+        'url_to_delete_comment',
+        'url_to_edit_comment',
+    ],
 )
-def test_redirects(client, name, args, comment, login_url):
-    url = reverse(name, args=(getattr(comment, args),))
-    expected_url = f'{login_url}?next={url}'
-    response = client.get(url)
+def test_redirects(client, fixture_name, login_url, request):
+    url_fixture = request.getfixturevalue(fixture_name)
+    response = client.get(url_fixture)
+    expected_url = f'{login_url}?next={url_fixture}'
     assertRedirects(response, expected_url)

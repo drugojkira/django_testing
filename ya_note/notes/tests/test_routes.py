@@ -34,20 +34,15 @@ class TestRoutes(BaseTestCase):
 
     def test_redirect_for_anonymous_client(self):
         urls = [
-            ('notes:edit', (self.note.slug,), self.notes_edit_url),
-            ('notes:delete', (self.note.slug,),
-             reverse('notes:delete', args=(self.note.slug,))),
-            ('notes:detail', (self.note.slug,),
-             reverse('notes:detail', args=(self.note.slug,))),
-            ('notes:list', None, reverse('notes:list')),
-            ('notes:success', None, reverse('notes:success')),
-            ('notes:add', None, reverse('notes:add')), ]
+            self.edit_url,
+            self.delete_url,
+            self.notes_detail,
+            self.list_url,
+            self.note_url,
+            self.url, ]
 
-        for name, args, url in urls:
-            with self.subTest(name=name):
-                if args:
-                    redirect_url = f'{self.login_url}?next={url}'
-                else:
-                    redirect_url = f'{self.login_url}?next={reverse(name)}'
+        for url in urls:
+            with self.subTest(name=url):
+                redirect_url = f'{self.login_url}?next={url}'
                 response = self.client.get(url)
                 self.assertRedirects(response, redirect_url)
