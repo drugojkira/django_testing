@@ -8,13 +8,26 @@ Django Testing - это проект, предназначенный для де
 
 1. Клонируйте репозиторий:
     ```bash
-    git clone <URL вашего репозитория>
+    git clone https://github.com/drugojkira/django_testing
     ```
 2. Перейдите в директорию проекта:
     ```bash
-    cd django_testing-main
+    cd django_sprint4-main
     ```
-3. Установите необходимые зависимости:
+3. Создайте виртуальное окружение:
+    ```bash
+    python -m venv venv
+    ```
+4. Активируйте виртуальное окружение:
+    - Для Windows:
+        ```bash
+        venv\Scripts\activate
+        ```
+    - Для macOS и Linux:
+        ```bash
+        source venv/bin/activate
+        ```
+5. Установите необходимые зависимости:
     ```bash
     pip install -r requirements.txt
     ```
